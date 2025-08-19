@@ -3,15 +3,325 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Video Background with Loader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #video-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            z-index: 1;
+        }
+        
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 100%);
+            z-index: 2;
+        }
+        
+        /* Loader Container */
+        .loader-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            background: rgba(10, 10, 20, 0.9);
+            transition: opacity 0.5s ease;
+        }
+        
+        /* Modern loader animation */
+        .loader {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+        
+        .loader-inner {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid transparent;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        .loader-inner:nth-child(2) {
+            border: 4px solid transparent;
+            border-bottom: 4px solid #e74c3c;
+            animation: spinReverse 1.5s linear infinite;
+        }
+        
+        .loader-inner:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            top: 10px;
+            left: 10px;
+            border: 4px solid transparent;
+            border-left: 4px solid #2ecc71;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes spinReverse {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
+        }
+        
+        .loader-text {
+            margin-top: 20px;
+            color: #ecf0f1;
+            font-size: 18px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+        
+        .loading-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 15px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.3s ease;
+        }
+        
+        .status {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 14px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0.8;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .status-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #2ecc71;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Mobile optimization */
+        @media (max-width: 768px) {
+            .loader {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .loader-inner:nth-child(3) {
+                width: 40px;
+                height: 40px;
+                top: 10px;
+                left: 10px;
+            }
+            
+            .loader-text {
+                font-size: 14px;
+            }
+            
+            .loading-progress {
+                width: 160px;
+            }
+            
+            .status {
+                font-size: 12px;
+                bottom: 20px;
+                padding: 8px 20px;
+            }
+        }
+        
+        /* Tablet optimization */
+        @media (max-width: 1024px) and (orientation: landscape) {
+            .loader {
+                width: 70px;
+                height: 70px;
+            }
+        }
+        
+        /* Portrait mode optimization */
+        @media (orientation: portrait) {
+            #video-bg {
+                width: auto;
+                height: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-     <div class="video-container">
-        <video autoplay muted loop id="background-video">
-            <source src="eee.mp4" type="video/mp4">
-            <source src="eee.mp4" type="video/webm">
-            Your browser does not support HTML5 video.
+    <div class="video-container">
+        <div class="loader-container" id="loader">
+            <div class="loader">
+                <div class="loader-inner"></div>
+                <div class="loader-inner"></div>
+                <div class="loader-inner"></div>
+            </div>
+            <p class="loader-text">Promptpix</p>
+            <div class="loading-progress">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+        
+        <video id="video-bg" autoplay muted loop playsinline>
+            <!-- Video sources with multiple formats for compatibility -->
+            <source src="https://atul4s.github.io/Prompt/eee.mp4" type="video/mp4">
+            <source src="https://atul4s.github.io/Prompt/eee.mp4" type="video/ogg">
+            Your browser does not support the video tag.
         </video>
+        <div class="overlay"></div>
+        <!-- <div class="status">
+            <span class="status-dot"></span>
+            Video background is playing
+        </div> -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('video-bg');
+            const loaderContainer = document.getElementById('loader');
+            const progressBar = document.getElementById('progress-bar');
+            const statusIndicator = document.querySelector('.status');
+            
+            // Simulate loading progress (since we can't get actual video load progress in this example)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                }
+            }, 200);
+            
+            // Set up video for mobile compatibility
+            function setupVideo() {
+                // Ensure video plays on mobile
+                const promise = video.play();
+                
+                if (promise !== undefined) {
+                    promise.catch(error => {
+                        loaderContainer.style.display = 'flex';
+                        statusIndicator.textContent = "Autoplay blocked: Tap to play";
+                        statusIndicator.style.cursor = 'pointer';
+                        statusIndicator.addEventListener('click', () => {
+                            video.play().then(() => {
+                                statusIndicator.textContent = "Video background is playing";
+                                loaderContainer.style.opacity = '0';
+                                setTimeout(() => {
+                                    loaderContainer.style.display = 'none';
+                                }, 500);
+                            }).catch(e => {
+                                statusIndicator.textContent = "Error: " + e.message;
+                            });
+                        });
+                    });
+                }
+            }
+            
+            // Handle video loading
+            video.addEventListener('loadeddata', function() {
+                // Hide loader when video has loaded
+                setTimeout(() => {
+                    loaderContainer.style.opacity = '0';
+                    setTimeout(() => {
+                        loaderContainer.style.display = 'none';
+                    }, 500);
+                }, 800);
+            });
+            
+            // Handle video errors
+            video.addEventListener('error', function() {
+                loaderContainer.style.display = 'flex';
+                document.querySelector('.loader-text').textContent = "Error loading video";
+                statusIndicator.textContent = "Error loading video";
+                statusIndicator.style.backgroundColor = 'rgba(255, 50, 50, 0.7)';
+                statusIndicator.querySelector('.status-dot').style.backgroundColor = '#ff5252';
+            });
+            
+            // Handle orientation changes
+            window.addEventListener('orientationchange', function() {
+                // Force video to recalculate dimensions
+                video.style.width = 'auto';
+                video.style.height = 'auto';
+                
+                setTimeout(() => {
+                    video.style.minWidth = '100%';
+                    video.style.minHeight = '100%';
+                }, 100);
+            });
+            
+            // Initialize video
+            setupVideo();
+        });
+    </script>
 </body>
 </html>
